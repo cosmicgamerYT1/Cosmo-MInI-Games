@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmo Mini Games</title>
+    <style>
+        /* General Styles */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #111;
+            color: white;
+            height: 100%;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #222;
+            border-bottom: 1px solid #333;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+        .top-btn {
+            background-color: #fff;
+            color: #111;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .top-btn:hover {
+            background-color: #ddd;
+        }
+
+        /* Auth Container (Sign In / Sign Up) */
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 60px); /* Adjust for nav bar */
+            background-image: url('https://via.placeholder.com/1920x1080/111111/333333?text=Background+Games+Grid');
+            background-size: cover;
+            background-blend-mode: overlay;
+        }
+        .auth-box {
+            background-color: #232527;
+            padding: 30px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        .auth-box h2 {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #aaa;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            background-color: #111;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background-color: #fff;
+            color: #111;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .submit-btn:hover {
+            background-color: #ddd;
+        }
+
+        /* Home Page Styles */
+        .home-container {
+            display: none; /* Hidden by default */
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #222;
+            padding: 20px;
+            border-right: 1px solid #333;
+        }
+        .sidebar a {
+            display: block;
+            color: #ccc;
+            text-decoration: none;
+            padding: 10px 0;
+            font-weight: bold;
+        }
+        .sidebar a:hover {
+            color: #fff;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .game-card {
+            background-color: #222;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .game-card:hover {
+            transform: scale(1.05);
+        }
+        .game-thumbnail {
+            width: 100%;
+            height: 120px;
+            background-color: #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #777;
+        }
+        .game-info {
+            padding: 10px;
+        }
+        .game-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .game-rating {
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <div class="logo">COSMO MINI GAMES</div>
+        <div id="nav-action-area">
+            <button class="top-btn" id="toggle-auth-btn" onclick="toggleAuthMode()">Sign In</button>
+        </div>
+    </div>
+
+    <div id="signup-page" class="auth-container">
+        <div class="auth-box">
+            <h2>SIGN UP AND START PLAYING!</h2>
+            <div class="input-group">
+                <label>Birthday</label>
+                <input type="date" id="signup-bday">
+            </div>
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" placeholder="Your Name" id="signup-name">
+            </div>
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" placeholder="Don't use your real name" id="signup-username">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" placeholder="At least 8 characters" id="signup-password">
+            </div>
+            <div class="input-group">
+                <label>Gender (Optional)</label>
+                <select id="signup-gender">
+                    <option value="">Select...</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <button class="submit-btn" onclick="loginToPlatform()">Sign Up</button>
+        </div>
+    </div>
+
+    <div id="signin-page" class="auth-container" style="display: none;">
+        <div class="auth-box">
+            <h2>Login to Cosmo Mini Games</h2>
+            <div class="input-group">
+                <input type="text" placeholder="Name or Username" id="signin-name">
+            </div>
+            <div class="input-group">
+                <input type="password" placeholder="Password" id="signin-password">
+            </div>
+            <button class="submit-btn" onclick="loginToPlatform()">Log In</button>
+        </div>
+    </div>
+
+    <div id="home-page" class="home-container" style="display: none;">
+        <div class="sidebar">
+            <a href="#">🏠 Home</a>
+            <a href="#">👤 Profile</a>
+            <a href="#">💬 Messages</a>
+            <a href="#">👥 Friends</a>
+            <a href="#">👕 Avatar</a>
+            <a href="#">🎒 Inventory</a>
+            <a href="#">⚙️ Settings</a>
+        </div>
+        <div class="main-content">
+            <h2>Recommended For You</h2>
+            <div class="games-grid">
+                <div class="game-card">
+                    <div class="game-thumbnail">Image 1</div>
+                    <div class="game-info">
+                        <div class="game-title">Cosmo Tycoon</div>
+                        <div class="game-rating">👍 95% Rating</div>
+                    </div>
+                </div>
+                <div class="game-card">
+                    <div class="game-thumbnail">Image 2</div>
+                    <div class="game-info">
+                        <div class="game-title">Space Simulator</div>
+                        <div class="game-rating">👍 92% Rating</div>
+                    </div>
+                </div>
+                <div class="game-card">
+                    <div class="game-thumbnail">Image 3</div>
+                    <div class="game-info">
+                        <div class="game-title">Mini Wars</div>
+                        <div class="game-rating">👍 88% Rating</div>
+                    </div>
+                </div>
+                <div class="game-card">
+                    <div class="game-thumbnail">Image 4</div>
+                    <div class="game-info">
+                        <div class="game-title">Mystery Doors</div>
+                        <div class="game-rating">👍 97% Rating</div>
+                    </div>
+                </div>
+                <div class="game-card">
+                    <div class="game-thumbnail">Image 5</div>
+                    <div class="game-info">
+                        <div class="game-title">Speed Run</div>
+                        <div class="game-rating">👍 90% Rating</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isSignUpMode = true;
+
+        function toggleAuthMode() {
+            const signupPage = document.getElementById('signup-page');
+            const signinPage = document.getElementById('signin-page');
+            const toggleBtn = document.getElementById('toggle-auth-btn');
+
+            if (isSignUpMode) {
+                // Switch to Sign In
+                signupPage.style.display = 'none';
+                signinPage.style.display = 'flex';
+                toggleBtn.innerText = 'Sign Up';
+                isSignUpMode = false;
+            } else {
+                // Switch to Sign Up
+                signinPage.style.display = 'none';
+                signupPage.style.display = 'flex';
+                toggleBtn.innerText = 'Sign In';
+                isSignUpMode = true;
+            }
+        }
+
+        function loginToPlatform() {
+            // Hide auth screens
+            document.getElementById('signup-page').style.display = 'none';
+            document.getElementById('signin-page').style.display = 'none';
+            
+            // Hide the top-right auth toggle button
+            document.getElementById('nav-action-area').style.display = 'none';
+
+            // Show home page
+            document.getElementById('home-page').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
