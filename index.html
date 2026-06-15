@@ -13,6 +13,7 @@
             background-color: #111;
             color: white;
             height: 100%;
+            overflow-x: hidden;
         }
 
         /* Top Navigation */
@@ -23,6 +24,8 @@
             padding: 10px 20px;
             background-color: #222;
             border-bottom: 1px solid #333;
+            position: relative;
+            z-index: 10;
         }
         .logo {
             font-size: 24px;
@@ -48,10 +51,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: calc(100vh - 60px); /* Adjust for nav bar */
-            background-image: url('https://via.placeholder.com/1920x1080/111111/333333?text=Background+Games+Grid');
-            background-size: cover;
-            background-blend-mode: overlay;
+            height: calc(100vh - 60px);
+            background-color: #181818;
         }
         .auth-box {
             background-color: #232527;
@@ -65,6 +66,8 @@
             text-align: center;
             margin-top: 0;
             margin-bottom: 20px;
+            font-size: 20px;
+            letter-spacing: 0.5px;
         }
         .input-group {
             margin-bottom: 15px;
@@ -77,12 +80,17 @@
         }
         .input-group input, .input-group select {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background-color: #111;
             border: 1px solid #444;
             color: white;
             border-radius: 4px;
             box-sizing: border-box;
+            font-size: 14px;
+        }
+        .input-group input:focus, .input-group select:focus {
+            border-color: #fff;
+            outline: none;
         }
         .submit-btn {
             width: 100%;
@@ -102,69 +110,89 @@
 
         /* Home Page Styles */
         .home-container {
-            display: none; /* Hidden by default */
-            display: flex;
+            display: none; /* Controlled by JS */
             height: calc(100vh - 60px);
         }
         .sidebar {
-            width: 200px;
+            width: 220px;
             background-color: #222;
             padding: 20px;
             border-right: 1px solid #333;
+            box-sizing: border-box;
         }
         .sidebar a {
             display: block;
             color: #ccc;
             text-decoration: none;
-            padding: 10px 0;
+            padding: 12px 10px;
             font-weight: bold;
+            border-radius: 4px;
+            margin-bottom: 5px;
         }
         .sidebar a:hover {
+            background-color: #333;
             color: #fff;
         }
         .main-content {
             flex-grow: 1;
-            padding: 20px;
+            padding: 30px;
             overflow-y: auto;
+            background-color: #111;
+        }
+        .user-welcome {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 25px;
+            color: #fff;
         }
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 25px;
             margin-top: 20px;
         }
         .game-card {
             background-color: #222;
-            border-radius: 8px;
+            border-radius: 6px;
             overflow: hidden;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #333;
         }
         .game-card:hover {
-            transform: scale(1.05);
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
         }
         .game-thumbnail {
             width: 100%;
-            height: 120px;
-            background-color: #444;
+            height: 150px;
+            background-color: #333;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #777;
+            font-size: 40px;
         }
         .game-info {
-            padding: 10px;
+            padding: 12px;
         }
         .game-title {
             font-weight: bold;
-            font-size: 14px;
-            margin-bottom: 5px;
+            font-size: 15px;
+            margin-bottom: 6px;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .game-rating {
             font-size: 12px;
-            color: #aaa;
+            color: #00e676;
+            font-weight: bold;
         }
     </style>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -203,7 +231,7 @@
                     <option value="other">Other</option>
                 </select>
             </div>
-            <button class="submit-btn" onclick="loginToPlatform()">Sign Up</button>
+            <button class="submit-btn" onclick="handleSignUp()">Sign Up</button>
         </div>
     </div>
 
@@ -211,16 +239,18 @@
         <div class="auth-box">
             <h2>Login to Cosmo Mini Games</h2>
             <div class="input-group">
-                <input type="text" placeholder="Name or Username" id="signin-name">
+                <label>Username or Name</label>
+                <input type="text" placeholder="Username" id="signin-username">
             </div>
             <div class="input-group">
+                <label>Password</label>
                 <input type="password" placeholder="Password" id="signin-password">
             </div>
-            <button class="submit-btn" onclick="loginToPlatform()">Log In</button>
+            <button class="submit-btn" onclick="handleSignIn()">Log In</button>
         </div>
     </div>
 
-    <div id="home-page" class="home-container" style="display: none;">
+    <div id="home-page" class="home-container">
         <div class="sidebar">
             <a href="#">🏠 Home</a>
             <a href="#">👤 Profile</a>
@@ -231,48 +261,47 @@
             <a href="#">⚙️ Settings</a>
         </div>
         <div class="main-content">
-            <h2>Recommended For You</h2>
+            <div id="welcome-message" class="user-welcome">Hello, Player!</div>
+            <h3>Recommended For You</h3>
             <div class="games-grid">
                 <div class="game-card">
-                    <div class="game-thumbnail">Image 1</div>
-                    <div class="game-info">
-                        <div class="game-title">Cosmo Tycoon</div>
-                        <div class="game-rating">👍 95% Rating</div>
-                    </div>
+                    <div class="game-thumbnail">🍋</div>
+                    <div class="game-info><div class="game-title">Sell Lemons Tycoon</div><div class="game-rating">👍 95%</div></div>
                 </div>
                 <div class="game-card">
-                    <div class="game-thumbnail">Image 2</div>
-                    <div class="game-info">
-                        <div class="game-title">Space Simulator</div>
-                        <div class="game-rating">👍 92% Rating</div>
-                    </div>
+                    <div class="game-thumbnail">⚔️</div>
+                    <div class="game-info"><div class="game-title">Cosmo Fruits</div><div class="game-rating">👍 92%</div></div>
                 </div>
                 <div class="game-card">
-                    <div class="game-thumbnail">Image 3</div>
-                    <div class="game-info">
-                        <div class="game-title">Mini Wars</div>
-                        <div class="game-rating">👍 88% Rating</div>
-                    </div>
+                    <div class="game-thumbnail">🚪</div>
+                    <div class="game-info"><div class="game-title">Space Doors</div><div class="game-rating">👍 89%</div></div>
                 </div>
                 <div class="game-card">
-                    <div class="game-thumbnail">Image 4</div>
-                    <div class="game-info">
-                        <div class="game-title">Mystery Doors</div>
-                        <div class="game-rating">👍 97% Rating</div>
-                    </div>
-                </div>
-                <div class="game-card">
-                    <div class="game-thumbnail">Image 5</div>
-                    <div class="game-info">
-                        <div class="game-title">Speed Run</div>
-                        <div class="game-rating">👍 90% Rating</div>
-                    </div>
+                    <div class="game-thumbnail">🔫</div>
+                    <div class="game-info"><div class="game-title">Cosmo Rivals</div><div class="game-rating">👍 94%</div></div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
+        // --- 1. FIREBASE CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCpKcmOI_nR5K3ngsTclg1OncpzDKBKpPQ",
+            authDomain: "cosmo-mini-games.firebaseapp.com",
+            databaseURL: "https://cosmo-mini-games-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "cosmo-mini-games",
+            storageBucket: "cosmo-mini-games.firebasestorage.app",
+            messagingSenderId: "45560615745",
+            appId: "1:45560615745:web:c82033cd4fca04962a07c0",
+            measurementId: "G-SNF1W3YHK7"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // --- 2. PAGE NAVIGATION LOGIC ---
         let isSignUpMode = true;
 
         function toggleAuthMode() {
@@ -281,13 +310,11 @@
             const toggleBtn = document.getElementById('toggle-auth-btn');
 
             if (isSignUpMode) {
-                // Switch to Sign In
                 signupPage.style.display = 'none';
                 signinPage.style.display = 'flex';
                 toggleBtn.innerText = 'Sign Up';
                 isSignUpMode = false;
             } else {
-                // Switch to Sign Up
                 signinPage.style.display = 'none';
                 signupPage.style.display = 'flex';
                 toggleBtn.innerText = 'Sign In';
@@ -295,16 +322,77 @@
             }
         }
 
-        function loginToPlatform() {
-            // Hide auth screens
+        function showHomePage(username) {
             document.getElementById('signup-page').style.display = 'none';
             document.getElementById('signin-page').style.display = 'none';
-            
-            // Hide the top-right auth toggle button
             document.getElementById('nav-action-area').style.display = 'none';
-
-            // Show home page
+            document.getElementById('welcome-message').innerText = `Hello, ${username}!`;
             document.getElementById('home-page').style.display = 'flex';
+        }
+
+        // --- 3. DATABASE AUTH LOGIC ---
+        
+        // SIGN UP FUNCTION
+        function handleSignUp() {
+            const bday = document.getElementById('signup-bday').value;
+            const name = document.getElementById('signup-name').value.trim();
+            const username = document.getElementById('signup-username').value.trim();
+            const password = document.getElementById('signup-password').value;
+            const gender = document.getElementById('signup-gender').value;
+
+            if(!username || !password || !name) {
+                alert("Please fill out your Name, Username, and Password!");
+                return;
+            }
+
+            // Check if user already exists
+            database.ref('users/' + username).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    alert("This username is already taken!");
+                } else {
+                    // Save to Firebase Realtime Database
+                    database.ref('users/' + username).set({
+                        birthday: bday,
+                        fullName: name,
+                        password: password,
+                        gender: gender
+                    }).then(() => {
+                        alert("Account registered successfully!");
+                        showHomePage(username);
+                    }).catch((error) => {
+                        alert("Registration failed: " + error.message);
+                    });
+                }
+            });
+        }
+
+        // SIGN IN FUNCTION
+        function handleSignIn() {
+            const username = document.getElementById('signin-username').value.trim();
+            const password = document.getElementById('signin-password').value;
+
+            if(!username || !password) {
+                alert("Please fill in all fields!");
+                return;
+            }
+
+            // Look up username in database
+            database.ref('users/' + username).once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    // Match password
+                    if (userData.password === password) {
+                        alert("Welcome back!");
+                        showHomePage(username);
+                    } else {
+                        alert("Incorrect password!");
+                    }
+                } else {
+                    alert("Username not found!");
+                }
+            }).catch((error) => {
+                alert("Error: " + error.message);
+            });
         }
     </script>
 </body>
