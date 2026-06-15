@@ -119,8 +119,11 @@
             padding: 20px;
             border-right: 1px solid #333;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-        .sidebar a {
+        .sidebar-links a {
             display: block;
             color: #ccc;
             text-decoration: none;
@@ -129,9 +132,18 @@
             border-radius: 4px;
             margin-bottom: 5px;
         }
-        .sidebar a:hover {
+        .sidebar-links a:hover {
             background-color: #333;
             color: #fff;
+        }
+        .logout-btn {
+            color: #ff5252 !important;
+            border: 1px solid #ff5252;
+            text-align: center;
+        }
+        .logout-btn:hover {
+            background-color: #ff5252 !important;
+            color: #fff !important;
         }
         .main-content {
             flex-grow: 1;
@@ -252,13 +264,18 @@
 
     <div id="home-page" class="home-container">
         <div class="sidebar">
-            <a href="#">🏠 Home</a>
-            <a href="#">👤 Profile</a>
-            <a href="#">💬 Messages</a>
-            <a href="#">👥 Friends</a>
-            <a href="#">👕 Avatar</a>
-            <a href="#">🎒 Inventory</a>
-            <a href="#">⚙️ Settings</a>
+            <div class="sidebar-links">
+                <a href="#">🏠 Home</a>
+                <a href="#">👤 Profile</a>
+                <a href="#">💬 Messages</a>
+                <a href="#">👥 Friends</a>
+                <a href="#">👕 Avatar</a>
+                <a href="#">🎒 Inventory</a>
+                <a href="#">⚙️ Settings</a>
+            </div>
+            <div class="sidebar-links">
+                <a href="#" class="logout-btn" onclick="handleLogOut()">🚪 Log Out</a>
+            </div>
         </div>
         <div class="main-content">
             <div id="welcome-message" class="user-welcome">Hello, Player!</div>
@@ -266,7 +283,7 @@
             <div class="games-grid">
                 <div class="game-card">
                     <div class="game-thumbnail">🍋</div>
-                    <div class="game-info><div class="game-title">Sell Lemons Tycoon</div><div class="game-rating">👍 95%</div></div>
+                    <div class="game-info"><div class="game-title">Sell Lemons Tycoon</div><div class="game-rating">👍 95%</div></div>
                 </div>
                 <div class="game-card">
                     <div class="game-thumbnail">⚔️</div>
@@ -301,7 +318,16 @@
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        // --- 2. PAGE NAVIGATION LOGIC ---
+        // --- 2. CHECK LOGIN SESSION ON LOAD ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUsername = localStorage.getItem('cosmoSessionUser');
+            if (savedUsername) {
+                // If a user was already logged in, jump straight to home page
+                showHomePage(savedUsername);
+            }
+        });
+
+        // --- 3. PAGE NAVIGATION LOGIC ---
         let isSignUpMode = true;
 
         function toggleAuthMode() {
@@ -323,14 +349,24 @@
         }
 
         function showHomePage(username) {
+            document.getElementById('signup-page').style.style.display = 'none';
             document.getElementById('signup-page').style.display = 'none';
             document.getElementById('signin-page').style.display = 'none';
             document.getElementById('nav-action-area').style.display = 'none';
             document.getElementById('welcome-message').innerText = `Hello, ${username}!`;
             document.getElementById('home-page').style.display = 'flex';
+            
+            // Save to browser memory
+            localStorage.setItem('cosmoSessionUser', username);
         }
 
-        // --- 3. DATABASE AUTH LOGIC ---
+        function handleLogOut() {
+            // Erase browser memory and reload
+            localStorage.removeItem('cosmoSessionUser');
+            window.location.reload();
+        }
+
+        // --- 4. DATABASE AUTH LOGIC ---
         
         // SIGN UP FUNCTION
         function handleSignUp() {
@@ -345,12 +381,10 @@
                 return;
             }
 
-            // Check if user already exists
             database.ref('users/' + username).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     alert("This username is already taken!");
                 } else {
-                    // Save to Firebase Realtime Database
                     database.ref('users/' + username).set({
                         birthday: bday,
                         fullName: name,
@@ -376,11 +410,9 @@
                 return;
             }
 
-            // Look up username in database
             database.ref('users/' + username).once('value').then((snapshot) => {
                 if (snapshot.exists()) {
                     const userData = snapshot.val();
-                    // Match password
                     if (userData.password === password) {
                         alert("Welcome back!");
                         showHomePage(username);
