@@ -322,7 +322,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             const savedUsername = localStorage.getItem('cosmoSessionUser');
             if (savedUsername) {
-                // If a user was already logged in, jump straight to home page
                 showHomePage(savedUsername);
             }
         });
@@ -349,19 +348,17 @@
         }
 
         function showHomePage(username) {
-            document.getElementById('signup-page').style.style.display = 'none';
+            // FIXED THE TYPO HERE (.style.style removed)
             document.getElementById('signup-page').style.display = 'none';
             document.getElementById('signin-page').style.display = 'none';
             document.getElementById('nav-action-area').style.display = 'none';
             document.getElementById('welcome-message').innerText = `Hello, ${username}!`;
             document.getElementById('home-page').style.display = 'flex';
             
-            // Save to browser memory
             localStorage.setItem('cosmoSessionUser', username);
         }
 
         function handleLogOut() {
-            // Erase browser memory and reload
             localStorage.removeItem('cosmoSessionUser');
             window.location.reload();
         }
